@@ -1,0 +1,11 @@
+Random CV (5-Fold):
+RMSE: 1.8418
+MAE: 1.4610
+R2: 0.1160
+
+Spatial Block CV (5 Blocks):
+RMSE: 2.2772
+MAE: 1.8877
+R2: -1.4943
+
+Baseline RMSE: 1.9626

@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>DeepStreetHeat Demo</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+</head>
+
+<body>
+    <header class="header">
+        <div class="header-left">
+            <div class="logo">
+                <i class="fas fa-fire-alt"></i>
+                <span>DeepStreetHeat</span>
+            </div>
+            <div class="sub">Street-Level Urban Heat Assessment</div>
+        </div>
+        <nav class="nav">
+            <button class="nav-btn active" data-view="overview"><i class="fas fa-info-circle"></i> Overview</button>
+            <button class="nav-btn" data-view="workflow"><i class="fas fa-project-diagram"></i> Workflow</button>
+            <button class="nav-btn" data-view="findings"><i class="fas fa-chart-line"></i> Key Findings</button>
+        </nav>
+        <div class="header-right">
+            <div class="select-group">
+                <i class="fas fa-layer-group"></i>
+                <select id="layerSelect">
+                    <option value="lst">Observed LST</option>
+                    <option value="predicted">Predicted LST</option>
+                    <option value="residual">Residual (T-P)</option>
+                    <option value="poi_density">POI Density</option>
+                </select>
+            </div>
+            <div class="check-group">
+                <input type="checkbox" id="quantileToggle" />
+                <label for="quantileToggle"><i class="fas fa-bullseye"></i> Hot/Cold</label>
+            </div>
+            <button class="icon-btn" id="helpBtn" title="Methodology"><i class="fas fa-question-circle"></i></button>
+        </div>
+    </header>
+
+    <div class="layout">
+        <!-- Left Panel: Project Info -->
+        <aside class="panel panel-left">
+            <div class="panel-section" id="overview-section">
+                <h3><i class="fas fa-globe-asia"></i> Research Overview</h3>
+                <p>Analyzing micro-scale urban heat in Yau Tsim Mong, Hong Kong, using Street View (SVI), Landsat-8, and
+                    POI data.</p>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-val">700</div>
+                        <div class="stat-label">Samples</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-val">2800</div>
+                        <div class="stat-label">Images</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-val">30m</div>
+                        <div class="stat-label">LST Res</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel-section" id="workflow-section">
+                <h3><i class="fas fa-tasks"></i> Data & Modeling Workflow</h3>
+                <div class="workflow-steps">
+                    <div class="step"><span>1</span> <strong>Collection</strong>: SVI API, GEE LST, OSM POI</div>
+                    <div class="step"><span>2</span> <strong>Features</strong>: Sky, Greenery, Texture, POI</div>
+                    <div class="step"><span>3</span> <strong>ML</strong>: Gradient Boosting (Random/Spatial CV)</div>
+                    <div class="step"><span>4</span> <strong>Stats</strong>: GWR for Spatial Heterogeneity</div>
+                    <div class="step"><span>5</span> <strong>Output</strong>: Heat Risk Map & Case Studies</div>
+                </div>
+            </div>
+
+            <div class="panel-section">
+                <h3><i class="fas fa-exchange-alt"></i> Data Flow & System</h3>
+                <div class="sys-design">
+                    <div class="sys-node">CSV/SHP</div>
+                    <div class="sys-arrow">→</div>
+                    <div class="sys-node">GeoJSON</div>
+                    <div class="sys-arrow">→</div>
+                    <div class="sys-node">Web GIS</div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Center Panel: Map & Overlays -->
+        <main class="panel-center">
+            <div id="map-wrap">
+                <div id="map"></div>
+                <!-- Floating Indicators Overlay (Left) -->
+                <div id="indicators-overlay" class="floating-card hidden">
+                    <h3><i class="fas fa-tachometer-alt"></i> Local Indicators</h3>
+                    <div id="indicators-list"></div>
+                </div>
+                <!-- Floating Street View Overlay (Right) -->
+                <div id="street-view-overlay" class="floating-card sv-card hidden">
+                    <div class="sv-header">
+                        <h3><i class="fas fa-camera"></i> Street View</h3>
+                        <span id="sv-id-label"></span>
+                    </div>
+                    <div class="sv-content">
+                        <img id="sv-image" src="" alt="Street View"
+                            onerror="this.src='https://placehold.co/400x300?text=No+Street+View+Available'" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="map-controls">
+                <div class="map-legend" id="legend">
+                    <!-- Dynamic Legend -->
+                </div>
+                <div class="basemap-switch">
+                    <button class="base-btn active" data-base="none">Off</button>
+                    <button class="base-btn" data-base="osm">OSM</button>
+                </div>
+            </div>
+        </main>
+
+        <!-- Right Panel: Info & Interpretation -->
+        <aside class="panel panel-right">
+            <div class="panel-section card">
+                <h3><i class="fas fa-map-marker-alt"></i> Selected Location</h3>
+                <div id="loc-info">
+                    <div class="placeholder">Click a point on the map</div>
+                </div>
+            </div>
+
+            <div class="panel-section card">
+                <h3><i class="fas fa-brain"></i> Model Interpretation</h3>
+                <div id="model-interpretation" class="ai-box">
+                    <div class="placeholder">Select a location to see interpretation</div>
+                </div>
+            </div>
+
+            <div class="panel-section" id="findings-section">
+                <h3><i class="fas fa-lightbulb"></i> Key Findings</h3>
+                <ul class="findings-list">
+                    <li><i class="fas fa-check-circle"></i> <strong>POI Boost</strong>: R² improved 4x (0.03 → 0.17)
+                        with activity data.</li>
+                    <li><i class="fas fa-check-circle"></i> <strong>Heterogeneity</strong>: Spatial Block CV reveals
+                        low generalization (R² < 0).</li>
+                    <li><i class="fas fa-check-circle"></i> <strong>Diagnostics</strong>: GWR (R²=0.31) outperforms
+                        global model (R²=0.17).</li>
+                </ul>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Modal for Methodology -->
+    <div id="methodModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2><i class="fas fa-microscope"></i> Methodology Details</h2>
+            <div class="modal-body">
+                <p><strong>LST Processing:</strong> Annual mean composite of Landsat-8 Collection 2 Level 2 images
+                    (2023).</p>
+                <p><strong>POI Density:</strong> Kernel Density / Count per Area in 100m buffer.</p>
+                <p><strong>GWR Settings:</strong> Gaussian GWR with Adaptive Bisquare kernel, bandwidth selected via
+                    AICc minimization.</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script id="main-script" src="./app.js"></script>
+</body>
+
+</html>
