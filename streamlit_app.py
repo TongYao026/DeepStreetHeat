@@ -23,7 +23,7 @@ st.markdown("""
 # --- 配置区域 ---
 # 如果您将街景图片上传到了 GitHub，请在此处填写 Raw 链接
 # 格式示例: "https://raw.githubusercontent.com/您的用户名/仓库名/分支名/web_demo/data/svi_images/"
-GITHUB_IMAGE_BASE_URL = "" 
+GITHUB_IMAGE_BASE_URL = "https://raw.githubusercontent.com/TongYao026/DeepStreetHeat/main/data/svi_images/" 
 
 def load_web_demo():
     """Bundles index.html, styles.css, app.js and points_data.js into a single HTML string."""
